@@ -4,7 +4,6 @@ const DynamicClass = require("./dynamic_class");
 class GatewayService {
     constructor({iot = {}, connectors = []}) {
         this.mqttClient = new MqttClient(iot);
-        this.convertedDataQueue = [];
         this.telemetryRequestTopic = iot.telemetryRequestTopic;
         this.accessToken = iot.security.accessToken;
 

@@ -8,18 +8,15 @@ class MqttConnector {
     }
 
     run() {
-        const config = this.config
-        const gateway = this.gateway
-
         const options = {
-            clientId: config.broker.clientId,
+            clientId: this.config.broker.clientId,
             connectTimeout: 5000,
-            username: config.broker.security.username,
-            password: config.broker.security.password,
+            username: this.config.broker.security.username,
+            password: this.config.broker.security.password,
         }
 
         //const client = mqtt.connect("mqtt://test.mosquitto.org", options)
-        const client = mqtt.connect(`mqtt://${config.host}:${config.port}`, options)
+        const client = mqtt.connect(`mqtt://${this.config.host}:${this.config.port}`, options)
 
         client.on("connect", function () {
             console.log("MQTT connected")
@@ -32,7 +29,7 @@ class MqttConnector {
 
         client.on("message", function (topic, message) {
             const data = JSON.parse(message.toString())
-            gateway.processConvertedData(data)
+            this.gateway.processConvertedData(data)
         })
     }
 }

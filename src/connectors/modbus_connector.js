@@ -26,27 +26,28 @@ class ModbusConnector {
             // on device number. and log the values to the console.
             this.slaves.forEach(slave => {
 
+                let json = {}
                 slave.timeseries.forEach(async timeserie => {
                     // open connection to a tcp line
                     await this.master?.connectTCP(slave.host, {port: slave.port});
                     this.master?.setID(slave.unitId);
-                    this.master?.setTimeout(slave.timeout)
+                    // this.master?.setTimeout(slave.timeout)
 
                     this.master.readHoldingRegisters(timeserie.address, timeserie.registerCount, (err, res) => {
                         if (!err) {
-                            this.convertAndPushToQueue(res.data[0], timeserie);
+                            json = this.convertToJson(res.data[0], timeserie, json);
                         } else {
                             console.log(err)
                         }
 
                     })
                 })
-
+                this.gateway.processConvertedData(json);
             })
         }, 1000)
     }
 
-    convertAndPushToQueue(data, timeserie) {
+    convertToJson(data, timeserie, json = {}) {
         const key = timeserie.key;
         const type = timeserie.type;
 
@@ -59,10 +60,9 @@ class ModbusConnector {
             value = Boolean(data);
         }
 
-        const json= {};
         json[key] = value;
 
-        this.gateway.processConvertedData(json);
+        return json;
     }
 
 }

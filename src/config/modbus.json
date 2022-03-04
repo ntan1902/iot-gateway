@@ -5,7 +5,7 @@
         "host": "127.0.0.1",
         "port": 50200,
         "type": "tcp",
-        "timeout": 35,
+        "timeout": 3500,
         "unitId": 1,
         "deviceName": "Temperature Sensor",
         "connectAttemptTimeMs": 5000,
