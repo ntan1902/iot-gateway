@@ -1,10 +1,12 @@
 const ModbusConnector = require("../connectors/modbus_connector");
 const MqttConnector = require("../connectors/mqtt_connector");
+const RestConnector = require("../connectors/rest_connector");
 
 
 const connectorsMapping = {
     "modbus": ModbusConnector,
-    "mqtt": MqttConnector
+    "mqtt": MqttConnector,
+    "rest": RestConnector
 };
 
 const DynamicClass = {

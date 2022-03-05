@@ -21,29 +21,26 @@ class ModbusConnector {
     }
 
     run() {
-        setInterval(() => {
+        setInterval(async () => {
             // read the values of registers starting at address
             // on device number. and log the values to the console.
-            this.slaves.forEach(slave => {
-
+            for (let slave of this.slaves) {
                 let json = {}
-                slave.timeseries.forEach(async timeserie => {
+                for (let timeserie of slave.timeseries) {
                     // open connection to a tcp line
                     await this.master?.connectTCP(slave.host, {port: slave.port});
                     this.master?.setID(slave.unitId);
                     // this.master?.setTimeout(slave.timeout)
 
-                    this.master.readHoldingRegisters(timeserie.address, timeserie.registerCount, (err, res) => {
-                        if (!err) {
-                            json = this.convertToJson(res.data[0], timeserie, json);
-                        } else {
-                            console.log(err)
-                        }
-
-                    })
-                })
+                    try {
+                        const res = await this.master.readHoldingRegisters(timeserie.address, timeserie.registerCount)
+                        json = this.convertToJson(res.data[0], timeserie, json);
+                    } catch (err) {
+                        console.log(err)
+                    }
+                }
                 this.gateway.processConvertedData(json);
-            })
+            }
         }, 1000)
     }
 
