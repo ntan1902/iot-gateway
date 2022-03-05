@@ -9,19 +9,19 @@ iot:
     inactivityTimeoutSeconds: 120
     inactivityCheckPeriodSeconds: 10
   security:
-    accessToken: "vihswxwp6uep501o8nt2s"
+    accessToken: "55cd2d0276233bd2143d"
   qos: 1
 
 connectors:
+  -
+    name: MQTT Broker Connector
+    type: mqtt
+    config: mqtt.json
 #  -
-#    name: MQTT Broker Connector
-#    type: mqtt
-#    config: mqtt.json
-  -
-    name: Modbus Connector
-    type: modbus
-    config: modbus.json
-  -
-    name: Rest Connector
-    type: rest
-    config: rest.json
+#    name: Modbus Connector
+#    type: modbus
+#    config: modbus.json
+#  -
+#    name: Rest Connector
+#    type: rest
+#    config: rest.json

@@ -16,7 +16,6 @@
     {
       "topicFilter": "/sensor/data",
       "converter": {
-        "type": "json",
         "deviceNameJsonExpression": "${serialNumber}",
         "deviceTypeJsonExpression": "${sensorType}",
         "timeout": 60000,

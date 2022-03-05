@@ -30,7 +30,7 @@ class ModbusConnector {
                     // open connection to a tcp line
                     await this.master?.connectTCP(slave.host, {port: slave.port});
                     this.master?.setID(slave.unitId);
-                    // this.master?.setTimeout(slave.timeout)
+                    this.master?.setTimeout(slave.timeout)
 
                     try {
                         const res = await this.master.readHoldingRegisters(timeserie.address, timeserie.registerCount)
