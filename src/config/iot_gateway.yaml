@@ -9,7 +9,7 @@ iot:
     inactivityTimeoutSeconds: 120
     inactivityCheckPeriodSeconds: 10
   security:
-    accessToken: "vihswxwp6uep501o8nt2s"
+    accessToken: "55cd2d0276233bd2143d"
   qos: 1
 
 connectors:
