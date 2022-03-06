@@ -16,8 +16,8 @@
     {
       "topicFilter": "/v1/devices/gateway/telemetry",
       "converter": {
-        "deviceNameJsonExpression": "${serialNumber}",
-        "deviceTypeJsonExpression": "${sensorType}",
+        "deviceNameExpression": "${serialNumber}",
+        "deviceLabelExpression": "${sensorLabel}",
         "timeout": 60000,
         "timeseries": [
           {

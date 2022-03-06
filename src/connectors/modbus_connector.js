@@ -1,6 +1,7 @@
 // create an empty modbus client
 const ModbusRTU = require("modbus-serial");
 const DynamicConfig = require("../service/dynamic_config");
+const MessageConverter = require("../helpers/message_converter");
 
 class ModbusConnector {
 
@@ -26,20 +27,24 @@ class ModbusConnector {
             // on device number. and log the values to the console.
             for (let slave of this.slaves) {
                 let json = {}
-                for (let timeserie of slave.timeseries) {
+
+                json["deviceName"] = slave["deviceName"]
+                json["deviceLabel"] = slave["deviceLabel"]
+
+                for (let ts of slave["timeseries"]) {
                     // open connection to a tcp line
-                    await this.master?.connectTCP(slave.host, {port: slave.port});
-                    this.master?.setID(slave.unitId);
-                    this.master?.setTimeout(slave.timeout)
+                    await this.master?.connectTCP(slave["host"], {port: slave["port"]});
+                    this.master?.setID(slave["unitId"]);
+                    this.master?.setTimeout(slave["timeout"])
 
                     try {
-                        const res = await this.master.readHoldingRegisters(timeserie.address, timeserie.registerCount)
-                        json = this.convertToJson(res.data[0], timeserie, json);
+                        const res = await this.master.readHoldingRegisters(ts["address"], ts["registerCount"])
+                        json = MessageConverter.generateJson(ts["type"], ts["key"], res.data[0], json)
                     } catch (err) {
                         console.log(err)
                     }
                 }
-                this.gateway.processConvertedData(json);
+                this.gateway.gwSendTelemetry(json);
             }
         }, 1000)
     }

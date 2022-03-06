@@ -21,7 +21,7 @@
       "converter": {
         "type": "json",
         "deviceNameExpression": "Device ${name}",
-        "deviceTypeExpression": "default",
+        "deviceLabelExpression": "default",
         "attributes": [
           {
             "type": "string",

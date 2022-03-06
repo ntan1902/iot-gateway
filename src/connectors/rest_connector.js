@@ -3,11 +3,18 @@ const express = require("express")
 const logger = require("morgan")
 const bodyParser = require("body-parser")
 const {StatusCodes, getReasonPhrase} = require("http-status-codes")
+const MessageConverter = require("../helpers/message_converter");
 
 class RestConnector {
     constructor(config, gateway) {
         this.config = DynamicConfig.getConnectorConfig(config)
         this.gateway = gateway
+
+        this.configEndpointMap = {}
+
+        this.config["mapping"].forEach(mapping => {
+            this.configEndpointMap[mapping["endpoint"]] = mapping
+        })
 
         this.app = express()
 
@@ -29,9 +36,8 @@ class RestConnector {
     }
 
     run() {
-        this.config.mapping.forEach(mapping => {
+        this.config["mapping"].forEach(mapping => {
             mapping['HTTPMethods'].forEach(httpMethod => {
-                console.log(mapping.endpoint)
                 switch (httpMethod) {
                     case "GET":
                         this.app.get(mapping.endpoint, this.handleRequest)
@@ -52,9 +58,9 @@ class RestConnector {
     }
 
     handleRequest(req, res) {
-        const jsonData = this.convertDataFromRequest(req)
-
-
+        const jsonData = JSON.parse(this.convertDataFromRequest(req)?.toString())
+        const convertedData = this.convertData(jsonData, req.url)
+        this.gateway.gwSendTelemetry(convertedData)
         res.status(StatusCodes.OK).send()
     }
 
@@ -64,6 +70,27 @@ class RestConnector {
         } else {
             return req.body
         }
+    }
+
+    convertData(jsonData, endpoint) {
+        let json = {}
+
+        const deviceName = MessageConverter.convert(this.configEndpointMap[endpoint]["converter"]['deviceNameExpression'], jsonData)
+        const deviceLabel = MessageConverter.convert(this.configEndpointMap[endpoint]["converter"]['deviceLabelExpression'], jsonData)
+
+        json["deviceName"] = deviceName;
+        json["deviceLabel"] = deviceLabel;
+
+        this.config['timeseries'].forEach(ts => {
+            const {type: typeTs, key: keyTs, value: valueTs} = ts
+
+            const key = MessageConverter.convert(keyTs, data)
+            const value = MessageConverter.convert(valueTs, data)
+
+            json = MessageConverter.generateJson(typeTs, key, value, json)
+        })
+
+        return json
     }
 }
 
