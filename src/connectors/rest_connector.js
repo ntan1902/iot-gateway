@@ -7,26 +7,26 @@ const MessageConverter = require("../helpers/message_converter");
 
 class RestConnector {
     constructor(config, gateway) {
-        this.config = DynamicConfig.getConnectorConfig(config)
-        this.gateway = gateway
+        this._config = DynamicConfig.getConnectorConfig(config)
+        this._gateway = gateway
 
-        this.configEndpointMap = {}
+        this._configEndpointMap = {}
 
-        this.config["mapping"].forEach(mapping => {
-            this.configEndpointMap[mapping["endpoint"]] = mapping
+        this._config["mapping"].forEach(mapping => {
+            this._configEndpointMap[mapping["endpoint"]] = mapping
         })
 
-        this.app = express()
+        this._app = express()
 
-        this.app.use(logger("dev"))
-        this.app.use(bodyParser.json())
-        this.app.use(bodyParser.urlencoded({extended: false}))
+        this._app.use(logger("dev"))
+        this._app.use(bodyParser.json())
+        this._app.use(bodyParser.urlencoded({extended: false}))
 
-        this.app.listen(this.config.port, this.config.host, () => {
-            console.log("Express server listening on port %d in %s", this.config.port, this.config.host);
+        this._app.listen(this._config["port"], this._config["host"], () => {
+            console.log("Express server listening on port %d in %s", this._config["port"], this._config["host"]);
         })
 
-        this.app.use((req, res, next) => {
+        this._app.use((req, res, next) => {
             res.header(
                 "Access-Control-Allow_Headers",
                 `Origin, Content-Type, Accept`
@@ -36,62 +36,70 @@ class RestConnector {
     }
 
     run() {
-        this.config["mapping"].forEach(mapping => {
+        const app = this._app
+        const gateway = this._gateway
+        const config = this._config
+        const configEndpointMap = this._configEndpointMap
+
+        config["mapping"].forEach(mapping => {
             mapping['HTTPMethods'].forEach(httpMethod => {
                 switch (httpMethod) {
                     case "GET":
-                        this.app.get(mapping.endpoint, this.handleRequest)
+                        app.get(mapping.endpoint, handleRequest)
                         break
                     case "POST":
-                        this.app.post(mapping.endpoint, this.handleRequest)
+                        app.post(mapping.endpoint, handleRequest)
                         break
                     case "PUT":
-                        this.app.put(mapping.endpoint, this.handleRequest)
+                        app.put(mapping.endpoint, handleRequest)
                         break
                     case "PATCH":
-                        this.app.patch(mapping.endpoint, this.handleRequest)
+                        app.patch(mapping.endpoint, handleRequest)
                         break
 
                 }
             })
         })
-    }
 
-    handleRequest(req, res) {
-        const jsonData = JSON.parse(this.convertDataFromRequest(req)?.toString())
-        const convertedData = this.convertData(jsonData, req.url)
-        this.gateway.gwSendTelemetry(convertedData)
-        res.status(StatusCodes.OK).send()
-    }
-
-    convertDataFromRequest(req) {
-        if (req.method === 'GET') {
-            return req.query
-        } else {
-            return req.body
+        function handleRequest(req, res) {
+            const data = convertDataFromRequest(req)
+            const convertedData = convertData(data, configEndpointMap[req.url]["converter"])
+            gateway.gwSendTelemetry(convertedData)
+            res.status(StatusCodes.OK).send()
         }
+
     }
 
-    convertData(jsonData, endpoint) {
-        let json = {}
+}
 
-        const deviceName = MessageConverter.convert(this.configEndpointMap[endpoint]["converter"]['deviceNameExpression'], jsonData)
-        const deviceLabel = MessageConverter.convert(this.configEndpointMap[endpoint]["converter"]['deviceLabelExpression'], jsonData)
-
-        json["deviceName"] = deviceName;
-        json["deviceLabel"] = deviceLabel;
-
-        this.config['timeseries'].forEach(ts => {
-            const {type: typeTs, key: keyTs, value: valueTs} = ts
-
-            const key = MessageConverter.convert(keyTs, data)
-            const value = MessageConverter.convert(valueTs, data)
-
-            json = MessageConverter.generateJson(typeTs, key, value, json)
-        })
-
-        return json
+function convertDataFromRequest(req) {
+    if (req.method === 'GET') {
+        return req.query
+    } else {
+        console.log("***", req.body)
+        return req.body
     }
+}
+
+function convertData(data, converter) {
+    let json = {}
+
+    const deviceName = MessageConverter.convert(converter['deviceNameExpression'], data)
+    const deviceLabel = MessageConverter.convert(converter['deviceLabelExpression'], data)
+
+    json["deviceName"] = deviceName;
+    json["deviceLabel"] = deviceLabel;
+
+    converter['timeseries'].forEach(ts => {
+        const {type: typeTs, key: keyTs, value: valueTs} = ts
+
+        const key = MessageConverter.convert(keyTs, data)
+        const value = MessageConverter.convert(valueTs, data)
+
+        json = MessageConverter.generateJson(typeTs, key, value, json)
+    })
+
+    return json
 }
 
 module.exports = RestConnector

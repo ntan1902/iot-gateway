@@ -46,7 +46,7 @@ class ModbusConnector {
                 }
                 this.gateway.gwSendTelemetry(json);
             }
-        }, 1000)
+        }, 5000)
     }
 
     convertToJson(data, timeserie, json = {}) {
